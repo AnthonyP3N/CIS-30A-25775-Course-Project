@@ -9,7 +9,10 @@ import budget_math
 USER_CSV = "./records.csv"
 
 # Choices for category dropdown boxes 
-choices = ["Housing", "Utilities", "Transportation", "Groceries", "Insurance/Debt", "Dining Out", "Entertainment", "Personal Care", "Non-essential Shopping", "Savings", "Etc"]
+choices = ["Housing", "Utilities", "Transportation", "Groceries", "Insurance/Debt", "Dining Out", "Entertainment", "Personal Care", "Non-essential Shopping","Payroll", "Savings", "Etc"]
+
+# Choices for amount of time user wants to budget for (Montly/Weekly)
+period_choics = ["Monthly", "Weekly"]
 
 try:
     df = pd.read_csv(USER_CSV)
@@ -206,6 +209,9 @@ class Entries(MainMenu):
     def __init__(self, root):
         super().__init__(root, "Entries Record Log", "650x400")
 
+        global df 
+        self.empty_label = None 
+
         # Try to load saved records from CSV file 
         # If file doesn't exist or no entries added, through exception
         # to an empty table with the right column names needed 
@@ -244,18 +250,63 @@ class Entries(MainMenu):
 
         # Loop through every row in CSV and add it as a row in the table
         # .iterrows() gives (index, row) pairs
-        # Only the row is needed, so index is thrown away with "_".
-        for _, row in entries_df.iterrows():
+        for index, row in entries_df.iterrows():
 
             # Pull value for each colum, same order as "columns", for formatting.
+            # change _ to index to keep track for deleting
             values = [row[col] for col in columns]
-            self.tree.insert("", "end", values=values)
+            self.tree.insert("", "end",iid=str(index), values=values)
 
         # Throw a message if no entries to show
         if entries_df.empty:
             empty_label = tk.Label(root, text="No entries yet")
             empty_label.pack(pady=(0,10))
+
+        button_frame = tk.Frame(root)
+        button_frame.pack(pady=(0,10))
+
+
+        self.delete_button = tk.Button(button_frame, text="Delete Selected", command=self.delete_selected)
+        self.delete_button.grid(row = 0, column = 0, padx = 5)   
+
+    def get_selected_index(self):
+            # Return the dateframe index of currently selected row or none
+            selection = self.tree.selection()
+            # error handling
+            if not selection:
+                messagebox.showwarning("No Selection", "Please select a row first.")
+                return None
+            return int(selection[0])
         
+    def delete_selected(self):
+            global df 
+
+            # check selected index, if none do nothing
+            row_index = self.get_selected_index()
+            if row_index is None:
+                return
+
+            # Ask user for confirmation to delete a entry 
+            confirm = messagebox.askyesno("Confirm Delete", "Delete selected entry?")
+
+            # if no, pass on do nothing
+            if not confirm:
+                return
+
+            # Drop selected row 
+            df = df.drop(index=row_index)
+
+            # Try condition for that reads user csv, if any error occurs with csv file throw messagebox 
+            try:
+                df.to_csv(USER_CSV, index=False)
+            except OSError as e:
+                messagebox.showerror("File Error", f"Could not save user's changes: {e}")
+                return
+
+            # Built-in method, use to delete selected row
+            self.tree.delete(str(row_index))
+
+
 
 if __name__ == "__main__":
     root = tk.Tk()

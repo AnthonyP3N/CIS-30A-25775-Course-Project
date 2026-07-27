@@ -1,13 +1,17 @@
 
-# Custom module file to handle financial calculations 
+# Custom module file to handle financial calculations for Budget Tracker application
 
-def calculate_balance(income, total_expenses):
-    return income - total_expenses
+def calculate_total(df, entry_type):
+    """
+    Add up the total amount for every row matching entry_type (Income/Expense).
+    Return 0.0 if error occurs
+    """
 
-def calculate_expense_ratio(income, total_expenses):
-
-    if income <= 0:
+    # Work in progress, came back to
+    try:
+        group = df[df["Type"] == entry_type]
+        return float(group["Amount"].sum())
+    except (KeyError, ValueError):
         return 0.0
-    else:
-        return (total_expenses / income) * 100
+
 
