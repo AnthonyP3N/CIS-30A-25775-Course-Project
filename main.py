@@ -364,10 +364,14 @@ class EditEntry(MainMenu):
         self.category_dropdown.grid(row = 3, column = 1)        
 
         # Income/Expense can't be changed 
-        self.entry_type = current_row["Type"]
+        self.label_type = tk.Label(root, text = "Type: ")
+        self.label_type.grid(row = 4, column = 0)
+        self.type_dropdown = ttk.Combobox(root, values = ["Expense", "Income"], state = "readonly")
+        self.type_dropdown.set(current_row["Type"])
+        self.type_dropdown.grid(row = 4, column = 1)      
 
         self.button_save = tk.Button(root, text="Save Changes", command=self.save_changes)
-        self.button_save.grid(row = 4, column = 0, columnspan = 2, pady = 10)
+        self.button_save.grid(row = 5, column = 0, columnspan = 2, pady = 10)
 
     def save_changes(self):
         global df
@@ -376,6 +380,7 @@ class EditEntry(MainMenu):
         amount = self.entry_amount.get().strip()
         description = self.entry_description.get().strip()
         category = self.category_dropdown.get().strip()
+        entry_type = self.type_dropdown.get().strip()
 
         # basic validation so bad input doesn't effect csv file
         if not date or not amount or not category:
@@ -393,6 +398,7 @@ class EditEntry(MainMenu):
         df.loc[self.row_index, "Amount"] = amount
         df.loc[self.row_index, "Description"] = description
         df.loc[self.row_index, "Category"] = category
+        df.loc[self.row_index, "Type"] = entry_type
 
         # Try condition for that reads user csv, if any error occurs with csv file throw messagebox 
         try:
@@ -402,7 +408,7 @@ class EditEntry(MainMenu):
             return       
 
         # Update row's being displayed to new changes
-        new_values = [date, description, amount, self.entry_type, category]
+        new_values = [date, description, amount, entry_type, category]
         self.entries_window.tree.item(str(self.row_index), values = new_values)
 
         messagebox.showinfo("Saved", "Entry updated!")
