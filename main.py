@@ -1,11 +1,15 @@
 import tkinter as tk
+from tkinter import messagebox
 import pandas as pd
 
 # Custom mod file call
 import budget_math 
 
+# Path to user csv, change if different name
+USER_CSV = "./records.csv"
+
 try:
-    df = pd.read_csv("./records.csv")
+    df = pd.read_csv(USER_CSV)
 except Exception as e:
     data = {
         "Date": [],
@@ -25,6 +29,38 @@ class MainMenu:
         # error case, crashes without
         if size:
             self.root.geometry(size)
+
+    def save_entry(self, amount_entry, entry_type):
+        global df 
+
+        date = self.entry_date.get().strip()
+        amount = amount_entry.get().strip()
+        description = self.entry_description.get().strip()
+
+        # basic validation so bad input doesn't effect csv file
+        if not date or not amount:
+            messagebox.showerror("Missing info", "Date and Amount are required.")
+            return 
+
+        try:
+            amount = float(amount)
+        except ValueError:
+            messagebox.showerror("Invalid amount", "Amount must be a number.")
+            return 
+
+        new_row = {
+            "Date": date,
+            "Description": description,
+            "Amount": amount,
+            "Type": entry_type
+        }
+
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv(USER_CSV, index=False)
+
+        messagebox.showinfo("Saved", f"{entry_type} entry added!")
+        self.root.destroy()
+
 
 # Budget Tracker App - Connects to other option(s)
 class BudgetTrackerApp(MainMenu):
@@ -71,6 +107,7 @@ class BudgetTrackerApp(MainMenu):
             # If window already exists, bring it toward the front for user to use
             self.income_window.lift()
 
+
 # Expense Window - allow user to input information about a new expense 
 class Expense(MainMenu):
     def __init__(self, root):
@@ -93,6 +130,9 @@ class Expense(MainMenu):
         self.label_description.grid(row = 2, column = 0)
         self.entry_description = tk.Entry(root)
         self.entry_description.grid(row = 2, column = 1)       
+
+        self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_expense, "Expense"))
+        self.button_add.grid(row =3, column = 0, columnspan = 2)
 
 
 # Income Window - allow user to input information about a new expense 
@@ -118,6 +158,8 @@ class Income(MainMenu):
         self.entry_description = tk.Entry(root)
         self.entry_description.grid(row = 2, column = 1)
 
+        self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_income, "Income"))
+        self.button_add.grid(row =3, column = 0, columnspan = 2)
 
 if __name__ == "__main__":
     root = tk.Tk()
