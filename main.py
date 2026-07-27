@@ -37,11 +37,11 @@ class MainMenu:
         if size:
             self.root.geometry(size)
 
-    def save_entry(self, amount_entry, entry_type):
+    def save_entry(self, entry_amount, entry_type):
         global df 
 
         date = self.entry_date.get().strip()
-        amount = amount_entry.get().strip()
+        amount = entry_amount.get().strip()
         description = self.entry_description.get().strip()
         category = self.category_dropdown.get().strip()
 
@@ -269,6 +269,10 @@ class Entries(MainMenu):
         self.delete_button = tk.Button(button_frame, text="Delete Selected", command=self.delete_selected)
         self.delete_button.grid(row = 0, column = 0, padx = 5)   
 
+        self.edit_button = tk.Button(button_frame, text="Edit Selected", command = self.edit_selected)
+        self.edit_button.grid(row = 0, column = 1, padx = 5)   
+
+
     def get_selected_index(self):
             # Return the dateframe index of currently selected row or none
             selection = self.tree.selection()
@@ -306,7 +310,103 @@ class Entries(MainMenu):
             # Built-in method, use to delete selected row
             self.tree.delete(str(row_index))
 
+    def edit_selected(self):
+            global df 
 
+            # check selected index, if none do nothing
+            row_index = self.get_selected_index()
+            if row_index is None:
+                return
+            
+            # Open a popup window prefilled with row's current values.
+            # Pass self so EditEntry can update this window's table after saving.
+            edit_window = tk.Toplevel(self.root)
+            EditEntry(edit_window, row_index, self)
+
+class EditEntry(MainMenu):
+    def __init__(self, root, row_index, entries_window):
+        super().__init__(root, "Edit Entry")
+
+        self.row_index = row_index
+        self.entries_window = entries_window
+
+        global df
+        current_row = df.loc[row_index]
+
+        # Re implment previous logic to edit selected option
+        # insert is a tkinter method that pre-fills the entry box with the row's
+        # current value, so the form opens already populated instead of blank.
+        # str() is needed because the value comes out of the dataframe as numpy
+        # insert() requires an actual string.
+
+        self.label_date = tk.Label(root, text = "Date: [YYYY-MM-DD]")
+        self.label_date.grid(row = 0, column = 0)
+        self.entry_date = tk.Entry(root)
+        self.entry_date.insert(0, str(current_row["Date"]))
+        self.entry_date.grid(row = 0, column = 1)
+
+        self.label_amount = tk.Label(root, text = "Amount: $")
+        self.label_amount.grid(row = 1, column = 0)
+        self.entry_amount = tk.Entry(root)
+        self.entry_amount.insert(0, str(current_row["Amount"]))
+        self.entry_amount.grid(row = 1, column = 1)
+
+        self.label_description = tk.Label(root, text = "Description: ")
+        self.label_description.grid(row = 2, column = 0)
+        self.entry_description = tk.Entry(root)
+        self.entry_description.insert(0, str(current_row["Description"]))
+        self.entry_description.grid(row = 2, column = 1)
+
+        self.label_description = tk.Label(root, text = "Category: ")
+        self.label_description.grid(row = 3, column = 0)
+        self.category_dropdown = ttk.Combobox(root, values = choices, state="readonly")
+        self.category_dropdown.set(current_row["Category"])
+        self.category_dropdown.grid(row = 3, column = 1)        
+
+        # Income/Expense can't be changed 
+        self.entry_type = current_row["Type"]
+
+        self.button_save = tk.Button(root, text="Save Changes", command=self.save_changes)
+        self.button_save.grid(row = 4, column = 0, columnspan = 2, pady = 10)
+
+    def save_changes(self):
+        global df
+
+        date = self.entry_date.get().strip()
+        amount = self.entry_amount.get().strip()
+        description = self.entry_description.get().strip()
+        category = self.category_dropdown.get().strip()
+
+        # basic validation so bad input doesn't effect csv file
+        if not date or not amount or not category:
+            messagebox.showerror("Missing info", "Date, Amount, and Category are required.")
+            return 
+
+        try:
+            amount = float(amount)
+        except ValueError:
+            messagebox.showerror("Invalid amount", "Amount must be a number.")
+            return 
+
+        # Updates data frame to match changes made by user
+        df.loc[self.row_index, "Date"] = date
+        df.loc[self.row_index, "Amount"] = amount
+        df.loc[self.row_index, "Description"] = description
+        df.loc[self.row_index, "Category"] = category
+
+        # Try condition for that reads user csv, if any error occurs with csv file throw messagebox 
+        try:
+            df.to_csv(USER_CSV, index=False)
+        except OSError as e:
+            messagebox.showerror("File Error", f"Could not save user's changes: {e}")
+            return       
+
+        # Update row's being displayed to new changes
+        new_values = [date, description, amount, self.entry_type, category]
+        self.entries_window.tree.item(str(self.row_index), values = new_values)
+
+        messagebox.showinfo("Saved", "Entry updated!")
+        self.root.destroy()
 
 if __name__ == "__main__":
     root = tk.Tk()
