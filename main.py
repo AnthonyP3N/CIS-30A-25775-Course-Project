@@ -80,6 +80,7 @@ class BudgetTrackerApp(MainMenu):
         # Create a variable to track the window state
         self.expense_window = None
         self.income_window = None
+        self.entries_window = None
 
         option_label = tk.Label(root, text = "Select an Option: ")
         option_label.pack()
@@ -96,10 +97,16 @@ class BudgetTrackerApp(MainMenu):
                                    command= self.open_income)
         income_screen.pack()
 
+        entries_screen = tk.Button(root,
+                                   text="Read Entries",
+                                   width=15,
+                                   command= self.open_entries)
+        entries_screen.pack()
+
     # function to open new window for expense
     def open_expense(self):
         # Check if window is NONE of if it has been destroyed
-        # In place to prevent user from opening multiple expense/income windows
+        # In place to prevent user from opening multiple windows
         if self.expense_window is None or not self.expense_window.winfo_exists():
             self.expense_window = tk.Toplevel(self.root)
             Expense(self.expense_window)
@@ -109,7 +116,7 @@ class BudgetTrackerApp(MainMenu):
 
     def open_income(self):
         # Check if window is NONE of if it has been destroyed
-        # In place to prevent user from opening multiple income/expense windows
+        # In place to prevent user from opening multiple windows
         if self.income_window is None or not self.income_window.winfo_exists():
             self.income_window = tk.Toplevel(self.root)
             Income(self.income_window)
@@ -117,6 +124,15 @@ class BudgetTrackerApp(MainMenu):
             # If window already exists, bring it toward the front for user to use
             self.income_window.lift()
 
+    def open_entries(self):
+        # Check if window is NONE of if it has been destroyed
+        # In place to prevent user from opening multiple windows
+        if self.entries_window is None or not self.entries_window.winfo_exists():
+            self.entries_window = tk.Toplevel(self.root)
+            Entries(self.entries_window)
+        else:
+            # If window already exists, bring it toward the front for user to use
+            self.entries_window.lift()
 
 # Expense Window - allow user to input information about a new expense 
 class Expense(MainMenu):
@@ -184,6 +200,13 @@ class Income(MainMenu):
 
         self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_income, "Income"))
         self.button_add.grid(row = 4, column = 0, columnspan = 2)
+
+# Entries Window - Showing the record log for all of user's provided entries, usage - USER_CSV 
+class Entries(MainMenu):
+    def __init__(self, root):
+        super().__init__(root, "Entries Record Log")
+
+        
 
 if __name__ == "__main__":
     root = tk.Tk()
