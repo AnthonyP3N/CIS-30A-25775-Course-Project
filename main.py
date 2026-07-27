@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 import pandas as pd
 
 # Custom mod file call
@@ -8,6 +8,9 @@ import budget_math
 # Path to user csv, change if different name
 USER_CSV = "./records.csv"
 
+# Choices for category dropdown boxes 
+choices = ["Housing", "Utilities", "Transportation", "Groceries", "Insurance/Debt", "Dining Out", "Entertainment", "Personal Care", "Non-essential Shopping", "Savings", "Etc"]
+
 try:
     df = pd.read_csv(USER_CSV)
 except Exception as e:
@@ -15,7 +18,8 @@ except Exception as e:
         "Date": [],
         "Description":[],
         "Amount":[],
-        "Type":[]
+        "Type":[],
+        "Category":[]
     }
 
     df = pd.DataFrame(data)
@@ -36,11 +40,16 @@ class MainMenu:
         date = self.entry_date.get().strip()
         amount = amount_entry.get().strip()
         description = self.entry_description.get().strip()
+        category = self.category_dropdown.get().strip()
+
 
         # basic validation so bad input doesn't effect csv file
         if not date or not amount:
             messagebox.showerror("Missing info", "Date and Amount are required.")
             return 
+        if not category:
+            messagebox.showerror("Missing info", "Please select a category.")
+            return
 
         try:
             amount = float(amount)
@@ -52,7 +61,8 @@ class MainMenu:
             "Date": date,
             "Description": description,
             "Amount": amount,
-            "Type": entry_type
+            "Type": entry_type,
+            "Category": category
         }
 
         df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
@@ -129,10 +139,17 @@ class Expense(MainMenu):
         self.label_description = tk.Label(root, text = "Description: ")
         self.label_description.grid(row = 2, column = 0)
         self.entry_description = tk.Entry(root)
-        self.entry_description.grid(row = 2, column = 1)       
+        self.entry_description.grid(row = 2, column = 1)
+
+        # Initializes category label for window and category drop down 
+        self.label_description = tk.Label(root, text = "Category: ")
+        self.label_description.grid(row = 3, column = 0)
+        # state read-only; user may pick from list but may not type their own option!
+        self.category_dropdown = ttk.Combobox(root, values = choices, state="readonly")
+        self.category_dropdown.grid(row = 3, column = 1)
 
         self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_expense, "Expense"))
-        self.button_add.grid(row =3, column = 0, columnspan = 2)
+        self.button_add.grid(row = 4, column = 0, columnspan = 2)
 
 
 # Income Window - allow user to input information about a new expense 
@@ -158,8 +175,15 @@ class Income(MainMenu):
         self.entry_description = tk.Entry(root)
         self.entry_description.grid(row = 2, column = 1)
 
+        # Initializes category label for window and category drop down 
+        self.label_description = tk.Label(root, text = "Category: ")
+        self.label_description.grid(row = 3, column = 0)
+        # state read-only; user may pick from list but may not type their own option!
+        self.category_dropdown = ttk.Combobox(root, values = choices, state="readonly")
+        self.category_dropdown.grid(row = 3, column = 1)
+
         self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_income, "Income"))
-        self.button_add.grid(row =3, column = 0, columnspan = 2)
+        self.button_add.grid(row = 4, column = 0, columnspan = 2)
 
 if __name__ == "__main__":
     root = tk.Tk()
