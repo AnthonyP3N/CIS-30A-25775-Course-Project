@@ -140,7 +140,7 @@ class Expense(MainMenu):
         super().__init__(root, "Add Expense")
 
         # Initializes date label for window and date text entry
-        self.label_date = tk.Label(root, text = "Date: [YY-MM-DD]")
+        self.label_date = tk.Label(root, text = "Date: [YYYY-MM-DD]")
         self.label_date.grid(row = 0, column = 0)
         self.entry_date = tk.Entry(root)
         self.entry_date.grid(row = 0, column = 1)
@@ -174,7 +174,7 @@ class Income(MainMenu):
         super().__init__(root, "Add Income")
 
         # Initializes date label for window and date text entry
-        self.label_date = tk.Label(root, text = "Date: [YY-MM-DD]")
+        self.label_date = tk.Label(root, text = "Date: [YYYY-MM-DD]")
         self.label_date.grid(row = 0, column = 0)
         self.entry_date = tk.Entry(root)
         self.entry_date.grid(row = 0, column = 1)
@@ -204,8 +204,57 @@ class Income(MainMenu):
 # Entries Window - Showing the record log for all of user's provided entries, usage - USER_CSV 
 class Entries(MainMenu):
     def __init__(self, root):
-        super().__init__(root, "Entries Record Log")
+        super().__init__(root, "Entries Record Log", "650x400")
 
+        # Try to load saved records from CSV file 
+        # If file doesn't exist or no entries added, through exception
+        # to an empty table with the right column names needed 
+        try:
+            entries_df = pd.read_csv(USER_CSV)
+        except Exception:
+            entries_df = pd.DataFrame(columns=["Date", "Description", "Amount", "Type", "Category"])
+
+        # Frame to group table and scroll bar together
+        table_frame = tk.Frame(root)
+        table_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Grab column names from data frame, i.e.
+        # (Date, Description, Amount, Type, Category) so table headers match CSV
+        columns = list(entries_df.columns)
+
+        # Use tkinter's built-in table widget of Treeview
+        # show = "headings" hides extra leftmost "tree" column, to make output look cleaner
+        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
+
+        # for each colum, set its header text than give it a fix width 
+        for col in columns:
+            self.tree.heading(col, text=col)
+            self.tree.column(col, width=110, anchor="center")
+
+        # Scroll bar for when there are more rows than what can fit on user's screen.
+        # command = self.tree.yview - is for vertical movement
+        scrollbar = ttk.Scrollbar(table_frame, orient = "vertical", command=self.tree.yview)
+
+        # Updates scrollbar's position
+        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        # Format table on left, scroll bar on right, both filling available space
+        self.tree.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Loop through every row in CSV and add it as a row in the table
+        # .iterrows() gives (index, row) pairs
+        # Only the row is needed, so index is thrown away with "_".
+        for _, row in entries_df.iterrows():
+
+            # Pull value for each colum, same order as "columns", for formatting.
+            values = [row[col] for col in columns]
+            self.tree.insert("", "end", values=values)
+
+        # Throw a message if no entries to show
+        if entries_df.empty:
+            empty_label = tk.Label(root, text="No entries yet")
+            empty_label.pack(pady=(0,10))
         
 
 if __name__ == "__main__":
