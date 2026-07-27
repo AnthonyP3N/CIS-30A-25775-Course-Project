@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk
 import pandas as pd
 
 # Custom mod file call
-import budget_math 
+import budget_math as budget
 
 # Path to user csv, change if different name
 USER_CSV = "./records.csv"
@@ -84,6 +84,7 @@ class BudgetTrackerApp(MainMenu):
         self.expense_window = None
         self.income_window = None
         self.entries_window = None
+        self.summary_window = None
 
         option_label = tk.Label(root, text = "Select an Option: ")
         option_label.pack()
@@ -105,6 +106,12 @@ class BudgetTrackerApp(MainMenu):
                                    width=15,
                                    command= self.open_entries)
         entries_screen.pack()
+
+        summary_screen = tk.Button(root,
+                                   text="View Summary",
+                                   width=15,
+                                   command=self.open_summary)
+        summary_screen.pack()
 
     # function to open new window for expense
     def open_expense(self):
@@ -136,6 +143,16 @@ class BudgetTrackerApp(MainMenu):
         else:
             # If window already exists, bring it toward the front for user to use
             self.entries_window.lift()
+
+    def open_summary(self):
+        # Check if window is NONE of if it has been destroyed
+        # In place to prevent user from opening multiple windows
+        if self.summary_window is None or not self.summary_window.winfo_exists():
+            self.summary_window = tk.Toplevel(self.root)
+            Summary(self.summary_window)
+        else:
+            # If window already exists, bring it toward the front for user to use
+            self.summary_window.lift()        
 
 # Expense Window - allow user to input information about a new expense 
 class Expense(MainMenu):
@@ -203,6 +220,30 @@ class Income(MainMenu):
 
         self.button_add = tk.Button(root, text = "Add Entry", command = lambda : self.save_entry(self.entry_income, "Income"))
         self.button_add.grid(row = 4, column = 0, columnspan = 2)
+
+# Summary Window - show user's budget results
+class Summary(MainMenu):
+    def __init__(self, root):
+        super().__init__(root, "Budget Summary")
+
+        # Read CSV, same logic as Entries window
+        try:
+            summary_df = pd.read_csv(USER_CSV)
+        except Exception:
+            summary_df = pd.DateOffset(columns=["Date", "Description", "Amount", "Type", "Category"])
+
+        income_total = budget.calculate_total(summary_df, "Income")
+        expense_total = budget.calculate_total(summary_df, "Expense")
+        net = budget.calculate_net(summary_df)
+
+        self.label_income = tk.Label(root, text=f"Total Income: ${income_total:.2f}")
+        self.label_income.pack(pady=5)
+
+        self.label_expense = tk.Label(root, text=f"Total Expense: ${expense_total:.2f}")
+        self.label_expense.pack(pady=5)
+
+        self.label_net = tk.Label(root, text=f"Net total: ${net:.2f}")
+        self.label_net.pack(pady=5)
 
 # Entries Window - Showing the record log for all of user's provided entries, usage - USER_CSV 
 class Entries(MainMenu):
