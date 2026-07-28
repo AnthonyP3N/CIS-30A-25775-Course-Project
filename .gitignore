@@ -5,3 +5,6 @@ __pycache__/
 
 # Ignore csv files being used as pratice 
 *.csv
+
+# Ignore text files being used as pratice
+*.txt

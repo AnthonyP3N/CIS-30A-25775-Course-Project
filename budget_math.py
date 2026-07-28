@@ -32,7 +32,7 @@ def category_group(df, entry_type):
     group = {}
     filtered = df[df["Type"] == entry_type]
 
-    for _, row in filtered.iterrorws():
+    for _, row in filtered.iterrows():
         category = row["Category"]
         amount = row["Amount"]
         if category in group:
@@ -63,5 +63,64 @@ def savings_progress(current_savings, savings_goal):
     return round(percent, 2)
     
 
+def build_summary_text(df, budget_goal, savings_goal, period):
+    """
+    Calls upon other functions to generate a text file summary that gets generated as "summary.txt".
+    Text file gets made using a constant var in main.py 
+    """
+
+    # Function calls
+    income_total = calculate_total(df, "Income")
+    expense_total = calculate_total(df, "Expense")
+    net = calculate_net(df)
+
+    income_group = category_group(df, "Income")
+    expense_group = category_group(df, "Expense")
+
+    lines = []
+    # Formatting of Budget Tracker Summary text file
+    lines.append("---"*30)
+    lines.append("                                  BUDGET TRACKER SUMMMARY                               ")
+    lines.append("---"*30)
+    lines.append(f"Period: {period}")
+    lines.append("")
+    lines.append(f"Total Income:   ${income_total:.2f}")
+    lines.append(f"Total Expenses: ${expense_total:.2f}")
+    lines.append(f"Net Balance:    ${net:.2f}")
+    lines.append("")
 
 
+    # Sorting Income(s) by Categories
+    lines.append("Income by Category:")
+    if income_group:
+
+        for category, total in income_group.items():
+            lines.append(f"  - {category}: ${total:.2f}")
+
+    else:
+        lines.append("  (no income entries yet)")
+    lines.append("")
+
+
+    # Sorting Expense(s) by Categories
+    lines.append("Expenses by Category:")
+    if expense_group:
+
+        for category, total in expense_group.items():
+            lines.append(f"  - {category}: ${total:.2f}")
+
+    else:
+        lines.append("  (no expense entries yet)")
+    lines.append("")
+
+    # Budget Goal from main.py 
+    lines.append(f"Budget Goal: ${budget_goal:.2f}")
+    lines.append(f"  - Status: {budget_status(expense_total, budget_goal)}")
+    lines.append("")
+
+    # Function Call, using saving goal from main.py
+    lines.append(f"Savings Goal: ${savings_goal:.2f}")
+    progress = savings_progress(net, savings_goal)
+    lines.append(f"  - Progress toward goal: {progress}%")
+
+    return "\n".join(lines)

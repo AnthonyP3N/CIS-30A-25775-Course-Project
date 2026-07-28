@@ -5,9 +5,11 @@ import pandas as pd
 # Custom mod file call
 import budget_math as budget
 
-# Path to user csv, change if different name
+# Constant Variables - change according to user path files
 GOALS_CSV = "./budget_goals.csv"
 USER_CSV = "./records.csv"
+SUMMARY_TXT = "./summary.txt"
+
 
 # Choices for category dropdown boxes 
 choices = ["Housing", "Utilities", "Transportation", "Groceries", "Insurance/Debt", "Dining Out", "Entertainment", "Personal Care", "Non-essential Shopping","Payroll", "Savings", "Etc"]
@@ -79,7 +81,7 @@ class MainMenu:
 # Budget Tracker App - Connects to other option(s)
 class BudgetTrackerApp(MainMenu):
     def __init__(self, root):
-        super().__init__(root, "Budget Tracker - Main Menu", "300x150")
+        super().__init__(root, "Budget Tracker - Main Menu","350x200")
 
         # Create a variable to track the window state
         self.expense_window = None
@@ -88,9 +90,15 @@ class BudgetTrackerApp(MainMenu):
         self.summary_window = None
         self.goals_window = None
 
+        # Label that tells user to select an option from below
         option_label = tk.Label(root, text = "Select an Option: ")
         option_label.pack()
 
+        """
+        Buttons that transition user to window options, use command to open new window.
+        Command points to function that opens new window
+        
+        """ 
         expense_screen = tk.Button(root, 
                                    text="Add Expense",
                                    width = 15,
@@ -122,6 +130,13 @@ class BudgetTrackerApp(MainMenu):
                                    command=self.open_goals)
         goals_screen.pack()        
 
+        summary_export_window = tk.Button(root,
+                                          text="Export summary.txt",
+                                          width=25,
+                                          command=self.export_summary)
+        summary_export_window.pack()
+                                        
+
     # function to open new window for expense
     def open_expense(self):
         # Check if window is NONE of if it has been destroyed
@@ -133,6 +148,7 @@ class BudgetTrackerApp(MainMenu):
             # If window already exists, bring it toward the front for user to use
             self.expense_window.lift()
 
+
     def open_income(self):
         # Check if window is NONE of if it has been destroyed
         # In place to prevent user from opening multiple windows
@@ -142,6 +158,7 @@ class BudgetTrackerApp(MainMenu):
         else:
             # If window already exists, bring it toward the front for user to use
             self.income_window.lift()
+
 
     def open_entries(self):
         # Check if window is NONE of if it has been destroyed
@@ -153,6 +170,7 @@ class BudgetTrackerApp(MainMenu):
             # If window already exists, bring it toward the front for user to use
             self.entries_window.lift()
 
+
     def open_summary(self):
         # Check if window is NONE of if it has been destroyed
         # In place to prevent user from opening multiple windows
@@ -161,7 +179,8 @@ class BudgetTrackerApp(MainMenu):
             Summary(self.summary_window)
         else:
             # If window already exists, bring it toward the front for user to use
-            self.summary_window.lift()        
+            self.summary_window.lift()    
+               
 
     def open_goals(self):
         # Check if window is NONE of if it has been destroyed
@@ -171,7 +190,36 @@ class BudgetTrackerApp(MainMenu):
             BudgetGoals(self.goals_window)
         else:
             # If window already exists, bring it toward the front for user to use
-            self.goals_window.lift()        
+            self.goals_window.lift()   
+
+
+    def export_summary(self):
+        # Read user records
+        try:
+            records_df = pd.read_csv(USER_CSV)
+        except Exception:
+            records_df = pd.DataFrame(columns=["Date", "Description", "Amount", "Type", "Category"])
+
+        try:
+            goals_df = pd.read_csv(GOALS_CSV)
+            period = goals_df.loc[0, "Period"]
+            budget_goal = goals_df.loc[0, "BudgetGoal"]
+            savings_goal = goals_df.loc[0, "SavingsGoal"]
+        except Exception:
+            period = "Monthly"
+            budget_goal = 0.0
+            savings_goal = 0.0
+
+        report_text = budget.build_summary_text(records_df, budget_goal, savings_goal, period)
+
+        try:
+            with open(SUMMARY_TXT, "w") as f:
+                f.write(report_text)
+        except OSError as e:
+            messagebox.showerror("File Error", f"Could not write summary file: error({e})")
+            return
+
+        messagebox.showinfo("Summary Exported", f"Summary written to {SUMMARY_TXT}")
 
 # Expense Window - allow user to input information about a new expense 
 class Expense(MainMenu):
@@ -243,13 +291,13 @@ class Income(MainMenu):
 # Summary Window - show user's budget results
 class Summary(MainMenu):
     def __init__(self, root):
-        super().__init__(root, "Budget Summary")
+        super().__init__(root, "Budget Summary", "300x100")
 
         # Read CSV, same logic as Entries window
         try:
             summary_df = pd.read_csv(USER_CSV)
         except Exception:
-            summary_df = pd.DateOffset(columns=["Date", "Description", "Amount", "Type", "Category"])
+            summary_df = pd.DateFrame(columns=["Date", "Description", "Amount", "Type", "Category"])
 
         income_total = budget.calculate_total(summary_df, "Income")
         expense_total = budget.calculate_total(summary_df, "Expense")
@@ -267,7 +315,7 @@ class Summary(MainMenu):
 # Budget Goals window = show user's goals
 class BudgetGoals(MainMenu):
     def __init__(self, root):
-        super().__init__(root, "Set Budget & Savings Goals", "300x180")
+        super().__init__(root, "Set Budget & Savings Goals", "320x100")
 
         # Try tp load goals that were saved. 
         try:
@@ -496,7 +544,6 @@ class EditEntry(MainMenu):
         self.category_dropdown.set(current_row["Category"])
         self.category_dropdown.grid(row = 3, column = 1)        
 
-        # Income/Expense can't be changed 
         self.label_type = tk.Label(root, text = "Type: ")
         self.label_type.grid(row = 4, column = 0)
         self.type_dropdown = ttk.Combobox(root, values = ["Expense", "Income"], state = "readonly")
