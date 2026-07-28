@@ -6,13 +6,14 @@ import pandas as pd
 import budget_math as budget
 
 # Path to user csv, change if different name
+GOALS_CSV = "./budget_goals.csv"
 USER_CSV = "./records.csv"
 
 # Choices for category dropdown boxes 
 choices = ["Housing", "Utilities", "Transportation", "Groceries", "Insurance/Debt", "Dining Out", "Entertainment", "Personal Care", "Non-essential Shopping","Payroll", "Savings", "Etc"]
 
 # Choices for amount of time user wants to budget for (Montly/Weekly)
-period_choics = ["Monthly", "Weekly"]
+period_choices = ["Monthly", "Weekly"]
 
 try:
     df = pd.read_csv(USER_CSV)
@@ -85,6 +86,7 @@ class BudgetTrackerApp(MainMenu):
         self.income_window = None
         self.entries_window = None
         self.summary_window = None
+        self.goals_window = None
 
         option_label = tk.Label(root, text = "Select an Option: ")
         option_label.pack()
@@ -112,6 +114,13 @@ class BudgetTrackerApp(MainMenu):
                                    width=15,
                                    command=self.open_summary)
         summary_screen.pack()
+
+
+        goals_screen = tk.Button(root,
+                                   text="Set Budget and Savings Goals",
+                                   width=25,
+                                   command=self.open_goals)
+        goals_screen.pack()        
 
     # function to open new window for expense
     def open_expense(self):
@@ -153,6 +162,16 @@ class BudgetTrackerApp(MainMenu):
         else:
             # If window already exists, bring it toward the front for user to use
             self.summary_window.lift()        
+
+    def open_goals(self):
+        # Check if window is NONE of if it has been destroyed
+        # In place to prevent user from opening multiple windows
+        if self.goals_window is None or not self.goals_window.winfo_exists():
+            self.goals_window = tk.Toplevel(self.root)
+            BudgetGoals(self.goals_window)
+        else:
+            # If window already exists, bring it toward the front for user to use
+            self.goals_window.lift()        
 
 # Expense Window - allow user to input information about a new expense 
 class Expense(MainMenu):
@@ -244,6 +263,79 @@ class Summary(MainMenu):
 
         self.label_net = tk.Label(root, text=f"Net total: ${net:.2f}")
         self.label_net.pack(pady=5)
+
+# Budget Goals window = show user's goals
+class BudgetGoals(MainMenu):
+    def __init__(self, root):
+        super().__init__(root, "Set Budget & Savings Goals", "300x180")
+
+        # Try tp load goals that were saved. 
+        try:
+            goals_df = pd.read_csv(GOALS_CSV)
+            current_period = goals_df.loc[0, "Period"]
+            current_budget = goals_df.loc[0, "BudgetGoal"]
+            current_savings = goals_df.loc[0, "SavingsGoal"]
+        except Exception:
+            current_period = "Monthly"
+            current_budget = 0.0
+            current_savings = 0.0
+
+        # Budget Period Label, grid, and dropdown box, period_choices = Weekly, Monthly
+        self.label_period = tk.Label(root, text = "Budget Period: ")
+        self.label_period.grid(row=0, column=0)
+        self.period_dropdown = ttk.Combobox(root, values= period_choices, state="readonly")
+        self.period_dropdown.set(current_period)
+        self.period_dropdown.grid(row=0, column=1)
+
+
+        self.label_budget = tk.Label(root, text = "Budget Goal: $")
+        self.label_budget.grid(row=1, column=0)
+        self.entry_budget = tk.Entry(root)
+        self.entry_budget.insert(0, str(current_budget))
+        self.entry_budget.grid(row=1, column=1)
+
+
+        self.label_savings = tk.Label(root, text = "Savings Goal: $")
+        self.label_savings.grid(row=2, column=0)
+        self.entry_savings = tk.Entry(root)
+        self.entry_savings.insert(0, str(current_savings))
+        self.entry_savings.grid(row=2, column=1)
+
+
+        self.button_save = tk.Button(root, text = "Save Goals", command=self.save_goals)
+        self.button_save.grid(row=3, column=0, columnspan= 2, pady= 10)
+
+    def save_goals(self):
+        period = self.period_dropdown.get().strip()
+        budget_text = self.entry_budget.get().strip()
+        savings_text = self.entry_savings.get().strip()
+
+        if not period:
+            messagebox.showerror("Missing Info", "Please select a budget period.")
+            return 
+
+        try:
+            # Change data type of text from str to float for use cases
+            budget_goal = float(budget_text)
+            savings_goal = float(savings_text)
+        except ValueError:
+            messagebox.showerror("Invalid amount", "Budget and Savings goals must be numbers.")
+            return
+
+        goals_df = pd.DataFrame([{
+            "Period": period,
+            "BudgetGoal": budget_goal,
+            "SavingsGoal": savings_goal
+        }])
+
+        try:
+            goals_df.to_csv(GOALS_CSV, index=False)
+        except OSError as e:
+            messagebox.showerror("File Error", f"Could not save goals due to {e}")
+            return
+
+        messagebox.showinfo("Saved", "Budget and savings goals updated!")
+        self.root.destroy()
 
 # Entries Window - Showing the record log for all of user's provided entries, usage - USER_CSV 
 class Entries(MainMenu):
