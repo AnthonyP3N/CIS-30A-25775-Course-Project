@@ -6,12 +6,16 @@ A desktop budget tracker built with Python (tkinter + pandas). Log expenses and 
 Features: 
 Add Expense / Add Income 
 - log a transaction with a date, amount, description, and category (chosen from a fixed dropdown so category names stay consistent).
+  
 Read Entries
 - view every transaction in a sortable table (sorted by date), with the ability to edit or delete any past entry directly.
+  
 Set Budget & Savings Goals
  - set a recurring budget goal and a savings goal on either a Monthly or Weekly cycle.
+   
 View Summary
 - a live on-screen breakdown of income, expenses, and net balance, toggleable between All Time and This Period totals.
+  
 Export summary.txt
 - writes a full text report to disk, including an all-time summary, a current-period summary broken down by category, and a status message describing whether you're over or under budget.
 
