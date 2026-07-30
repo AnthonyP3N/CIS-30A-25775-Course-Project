@@ -51,9 +51,9 @@ Usage
 4. Use View Summary to check your totals at a glance, or Export summary.txt to generate a saved report.
    
 Known Limitations
-Supports a single user and a single set of goals at a time; no multi-profile support.
-Categories are a fixed list defined in main.py; adding a new category requires editing the source code.
-Weekly/Monthly periods are calculated relative to the current calendar date, not a custom user-defined start date.
-No charts or graphs; output is limited to a table view and a plain-text report.
+- Supports a single user and a single set of goals at a time; no multi-profile support.
+- Categories are a fixed list defined in main.py; adding a new category requires editing the source code.
+- Weekly/Monthly periods are calculated relative to the current calendar date, not a custom user-defined start date.
+- No charts or graphs; output is limited to a table view and a plain-text report.
 
 
