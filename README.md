@@ -29,8 +29,7 @@ Project Structure
 
 main.py and budget_math.py are deliberately kept separate: main.py handles the interface (windows, buttons, forms), while budget_math.py handles every calculation (totals, category breakdowns, budget/savings status, date filtering). None of the math lives in the GUI code.
 
-Getting Started
-
+To get started -
 Requirements: Python 3, pandas
 
 bash
