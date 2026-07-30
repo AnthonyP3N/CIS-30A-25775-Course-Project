@@ -34,12 +34,14 @@ Getting Started
 Requirements: Python 3, pandas
 
 bash
-pip install pandas
+
+- pip install pandas
 
 Run the program:
 
 bash
-python main.py
+
+- python main.py
 
 The first time you run it, records.csv and budget_goals.csv don't exist yet; the program creates them automatically once you add your first entry or save your first goal, so no manual setup is needed.
 
